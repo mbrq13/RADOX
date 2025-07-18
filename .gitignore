@@ -1,0 +1,102 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Data and Models
+data/models/*.h5
+data/models/*.pkl
+data/models/*.joblib
+data/uploads/*
+!data/uploads/.gitkeep
+data/vector_db/*
+!data/vector_db/.gitkeep
+
+# Logs
+logs/
+*.log
+
+# Docker
+.dockerignore
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Temporary Files
+*.tmp
+*.temp
+.cache/
+
+# Tests
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Documentation
+docs/_build/
+
+# ChromaDB
+chroma.log
+
+# Hugging Face Cache
+.cache/huggingface/
+
+# Medical Images (for privacy)
+*.dcm
+*.dicom
+*.jpg
+*.jpeg
+*.png
+!frontend/static/images/*.png
+!frontend/static/images/*.jpg
+
+# Backup Files
+*.bak
+*.backup
+
+# Local Development
+local_config.py
+development.env 

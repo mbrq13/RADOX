@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RADOX - Detección de Neumonía con IA</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Estilos personalizados -->
+    <style>
+        :root {
+            --primary-color: #2c5aa0;
+            --secondary-color: #1e3d72;
+            --accent-color: #4a90e2;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --light-bg: #f8f9fa;
+            --dark-text: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--light-bg) 0%, #e3f2fd 100%);
+            color: var(--dark-text);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .upload-area {
+            border: 3px dashed var(--accent-color);
+            border-radius: 15px;
+            padding: 3rem;
+            text-align: center;
+            background: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--success-color);
+            background: #e8f5e8;
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-top: 2rem;
+            border-left: 5px solid var(--accent-color);
+        }
+
+        .diagnosis-positive {
+            border-left-color: var(--danger-color) !important;
+        }
+
+        .diagnosis-negative {
+            border-left-color: var(--success-color) !important;
+        }
+
+        .confidence-meter {
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--warning-color) 0%, var(--success-color) 100%);
+            border-radius: 10px;
+            transition: width 0.8s ease;
+        }
+
+        .btn-analyze {
+            background: linear-gradient(135deg, var(--success-color) 0%, #20c997 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 15px 30px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-analyze:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-report {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 25px;
+            font-weight: 600;
+        }
+
+        .loading-spinner {
+            display: none;
+            margin: 2rem auto;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            margin: 1rem 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .report-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            border: 1px solid #dee2e6;
+        }
+
+        .status-badge {
+            font-size: 0.9rem;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .disclaimer {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .hero-section { padding: 2rem 0; }
+            .upload-area { padding: 2rem 1rem; }
+            .result-card { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">
+                <i class="bi bi-hospital me-2"></i>
+                RADOX
+            </a>
+            <span class="navbar-text">
+                Sistema de Detección de Neumonía con IA
+            </span>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container text-center">
+            <h1 class="display-4 fw-bold mb-3">
+                <i class="bi bi-lungs me-3"></i>
+                Detección de Neumonía con IA
+            </h1>
+            <p class="lead">
+                Análisis automatizado de radiografías de tórax utilizando inteligencia artificial
+            </p>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                
+                <!-- Upload Area -->
+                <div class="upload-area" id="uploadArea">
+                    <i class="bi bi-cloud-upload upload-icon"></i>
+                    <h3 class="mb-3">Cargar Radiografía de Tórax</h3>
+                    <p class="text-muted mb-4">
+                        Arrastra y suelta tu imagen aquí, o haz clic para seleccionar
+                    </p>
+                    <p class="small text-muted">
+                        Formatos soportados: JPG, PNG, DICOM • Tamaño máximo: 10MB
+                    </p>
+                    
+                    <input type="file" id="fileInput" class="d-none" 
+                           accept=".jpg,.jpeg,.png,.dcm,.dicom" />
+                    
+                    <div id="fileInfo" class="mt-3 d-none">
+                        <div class="alert alert-info">
+                            <i class="bi bi-file-image me-2"></i>
+                            <span id="fileName"></span>
+                            <span class="badge bg-primary ms-2" id="fileSize"></span>
+                        </div>
+                        <img id="imagePreview" class="image-preview d-none" />
+                    </div>
+                </div>
+
+                <!-- Analyze Button -->
+                <div class="text-center mt-4">
+                    <button class="btn btn-analyze btn-lg" id="analyzeBtn" disabled>
+                        <i class="bi bi-search me-2"></i>
+                        Analizar Radiografía
+                    </button>
+                </div>
+
+                <!-- Loading Spinner -->
+                <div class="text-center loading-spinner" id="loadingSpinner">
+                    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+                    <p class="mt-3 text-muted">Analizando imagen con IA...</p>
+                </div>
+
+                <!-- Results -->
+                <div id="resultsSection" class="d-none">
+                    <div class="result-card fade-in">
+                        <h4 class="mb-4">
+                            <i class="bi bi-clipboard-data me-2"></i>
+                            Resultados del Análisis
+                        </h4>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Diagnóstico:</label>
+                                    <div>
+                                        <span class="status-badge" id="diagnosisResult"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Nivel de Confianza:</label>
+                                    <div class="confidence-meter mt-2">
+                                        <div class="confidence-fill" id="confidenceFill"></div>
+                                    </div>
+                                    <small class="text-muted mt-1 d-block">
+                                        <span id="confidenceText"></span>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4" id="reportSection" style="display: none;">
+                            <hr>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-file-text me-2"></i>
+                                    Informe Médico
+                                </h5>
+                                <button class="btn btn-report" id="generateReportBtn">
+                                    <i class="bi bi-file-plus me-2"></i>
+                                    Generar Informe
+                                </button>
+                            </div>
+                            
+                            <div id="reportContent" class="d-none">
+                                <div class="report-section">
+                                    <h6 class="fw-bold text-primary">Resumen Ejecutivo:</h6>
+                                    <p id="reportSummary" class="mb-3"></p>
+                                    
+                                    <h6 class="fw-bold text-primary">Informe Completo:</h6>
+                                    <div id="reportFull" class="mb-3"></div>
+                                    
+                                    <h6 class="fw-bold text-primary">Recomendaciones:</h6>
+                                    <div id="reportRecommendations"></div>
+                                    
+                                    <div class="mt-3 small text-muted">
+                                        <i class="bi bi-calendar me-1"></i>
+                                        <span id="reportTimestamp"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Disclaimer -->
+                <div class="disclaimer">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Importante:</strong> Este sistema es para fines educativos y de investigación. 
+                    Los resultados deben ser siempre revisados por un profesional médico cualificado. 
+                    No utilice este sistema para tomar decisiones médicas sin supervisión profesional.
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-5 py-4 bg-dark text-light text-center">
+        <div class="container">
+            <p class="mb-0">
+                <i class="bi bi-shield-check me-2"></i>
+                RADOX v1.0 - Sistema de Detección de Neumonía con IA
+            </p>
+            <small class="text-muted">Desarrollado con TensorFlow.js y Hugging Face API</small>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- App JS -->
+    <script src="js/app.js"></script>
+</body>
+</html> 

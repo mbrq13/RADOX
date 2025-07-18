@@ -1,0 +1,17 @@
+{
+  "loaded_strategy": "complete",
+  "total_layers_in_file": 426,
+  "model_layers": 181,
+  "layers_with_weights": 109,
+  "model_input_shape": [
+    null,
+    224,
+    224,
+    3
+  ],
+  "model_output_shape": [
+    null,
+    2
+  ],
+  "loaded_from": "./data/models/brucechou1983_CheXNet_Keras_0.3.0_weights.h5"
+}
