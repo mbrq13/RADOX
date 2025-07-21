@@ -1,17 +1,32 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { useDropzone } from "react-dropzone"
-import { Upload, FileImage, Loader2, Calendar, User } from "lucide-react"
+import { Upload, FileImage, Loader2, Calendar, User, AlertTriangle, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
-import { mockPatients, createNewPatientWithPendingStudy } from "@/lib/mock-data"
+// Quitar importación de mockPatients y helpers
+// import { mockPatients, createNewPatientWithPendingStudy } from "@/lib/mock-data"
 
 interface UploadPageProps {
   onUploadComplete: (patientId: string) => void
+}
+
+interface AnalysisResult {
+  success: boolean
+  resultado: {
+    diagnostico: string
+    confianza: number
+    porcentaje: number
+    tieneNeumonía: boolean
+    puedeGenerarInforme: boolean
+    imagePath: string
+    heatmap?: string // Base64 encoded heatmap image
+  }
+  timestamp: string
 }
 
 export default function UploadPage({ onUploadComplete }: UploadPageProps) {
@@ -23,6 +38,30 @@ export default function UploadPage({ onUploadComplete }: UploadPageProps) {
   const [studyDate, setStudyDate] = useState(new Date().toISOString().split("T")[0])
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false)
+  const [isAnalysisComplete, setIsAnalysisComplete] = useState(false)
+  const [patients, setPatients] = useState<any[]>([])
+  const [loadingPatients, setLoadingPatients] = useState(false)
+
+  // Obtener pacientes reales del backend
+  const fetchPatients = async () => {
+    setLoadingPatients(true)
+    try {
+      const res = await fetch("http://localhost:8000/api/v1/patients")
+      if (!res.ok) throw new Error("Error fetching patients")
+      const data = await res.json()
+      setPatients(data)
+    } catch (err) {
+      setPatients([])
+    } finally {
+      setLoadingPatients(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchPatients()
+  }, [])
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
@@ -30,6 +69,8 @@ export default function UploadPage({ onUploadComplete }: UploadPageProps) {
       setSelectedFile(file)
       const url = URL.createObjectURL(file)
       setPreviewUrl(url)
+      setAnalysisResult(null) // Reset previous results
+      setIsAnalysisComplete(false) // Reset completion state
     }
   }, [])
 
@@ -42,72 +83,179 @@ export default function UploadPage({ onUploadComplete }: UploadPageProps) {
     maxSize: 10 * 1024 * 1024, // 10MB
   })
 
-      const handleUpload = async () => {
-        const finalPatientId = patientId === "__new__" ? newPatientId : patientId;
-        if (!selectedFile || !finalPatientId) return
-        setIsUploading(true)
-        setUploadProgress(0)
-        
-        let progressInterval: NodeJS.Timeout | undefined;
-        
-        try {
-            // Simulate file upload
-            const formData = new FormData()
-            formData.append("image", selectedFile)
-            formData.append("patientId", finalPatientId)
-            if (patientId === "__new__") {
-                formData.append("patientName", newPatientName)
-            }
-            formData.append("studyDate", studyDate)
+  const handleUpload = async () => {
+    const finalPatientId = patientId === "__new__" ? newPatientId : patientId;
+    if (!selectedFile || !finalPatientId) return;
 
-            // Simulate upload progress
-            progressInterval = setInterval(() => {
-                setUploadProgress((prev) => {
-                    if (prev >= 90) {
-                        clearInterval(progressInterval)
-                        return 90
-                    }
-                    return prev + 10
-                })
-            }, 200)
+    setIsUploading(true);
+    setUploadProgress(0);
+    setAnalysisResult(null);
+    setIsAnalysisComplete(false);
 
-            // Simulate processing time
-            await new Promise((resolve) => setTimeout(resolve, 2000))
+    let progressInterval: NodeJS.Timeout | undefined;
 
-            // Create new patient/study in mock data
-            const imagePath = `/uploads/${finalPatientId}_${studyDate.replace(/-/g, '')}.png`
-            if (patientId === "__new__") {
-                createNewPatientWithPendingStudy(finalPatientId, newPatientName, studyDate, imagePath)
-            } else {
-                // For existing patients, we'll add the study with pending analysis
-                const existingPatient = mockPatients.find(p => p.patientId === finalPatientId)
-                if (existingPatient) {
-                    const newStudy = {
-                        patientId: finalPatientId,
-                        studyDate,
-                        diagnosis: "Sin Análisis",
-                        confidence: 0,
-                        imagePath,
-                    }
-                    existingPatient.studies.unshift(newStudy)
-                }
-            }
+    try {
+      // Simular progreso de carga
+      progressInterval = setInterval(() => {
+        setUploadProgress((prev: number) => {
+          if (prev >= 90) {
+            if (progressInterval) clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 200);
 
-            clearInterval(progressInterval)
-            setUploadProgress(100)
+      // 1. Crear paciente si es nuevo
+      if (patientId === "__new__") {
+        await fetch("http://localhost:8000/api/v1/patients", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: newPatientId,
+            nombre: newPatientName,
+            fecha_registro: new Date().toISOString(),
+          }),
+        });
+        await fetchPatients(); // Refrescar lista tras crear
+      }
 
-            setTimeout(() => {
-                onUploadComplete(finalPatientId)
-                setIsUploading(false)
-            }, 500)
-        } catch (error) {
-            console.error("Upload failed:", error)
-            if (progressInterval) {
-                clearInterval(progressInterval)
-            }
-            setIsUploading(false)
-        }
+      // 2. Subir estudio (imagen)
+      const formData = new FormData();
+      formData.append("patient_id", finalPatientId);
+      formData.append("descripcion", `Estudio del ${studyDate}`);
+      formData.append("file", selectedFile);
+
+      const res = await fetch("http://localhost:8000/api/v1/studies", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Error al subir el estudio");
+      const study = await res.json();
+
+      // 3. Mostrar resultado simulado (puedes adaptar para análisis real luego)
+      const isPneumonia = Math.random() > 0.5;
+      const confidence = isPneumonia ? 0.7 + Math.random() * 0.3 : 0.1 + Math.random() * 0.3;
+      const heatmapPlaceholder = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+
+      // PATCH para guardar diagnostico/confianza en el estudio
+      await fetch(`http://localhost:8000/api/v1/studies/${study.id}`, {
+        method: "PATCH",
+        body: (() => {
+          const fd = new FormData();
+          fd.append("diagnostico", isPneumonia ? "Neumonía" : "Normal");
+          fd.append("confianza", confidence.toString());
+          return fd;
+        })(),
+      });
+
+      const backendUrl = 'http://localhost:8000';
+      const result: AnalysisResult = {
+        success: true,
+        resultado: {
+          diagnostico: isPneumonia ? "Neumonía" : "Normal",
+          confianza: confidence,
+          porcentaje: Math.round(confidence * 100),
+          tieneNeumonía: isPneumonia,
+          puedeGenerarInforme: isPneumonia && confidence >= 0.7,
+          imagePath: `${backendUrl}/uploads/images/${study.filename}`,
+          heatmap: heatmapPlaceholder,
+        },
+        timestamp: new Date().toISOString(),
+      };
+      setAnalysisResult(result);
+      setIsAnalysisComplete(true);
+
+      if (progressInterval) clearInterval(progressInterval);
+      setUploadProgress(100);
+      setIsUploading(false);
+    } catch (error) {
+      console.error("Upload failed:", error);
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
+      setIsUploading(false);
+      const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+      alert(`Error en el análisis: ${errorMessage}`);
     }
+  };
+
+  const generateReport = async () => {
+    if (!analysisResult || !analysisResult.resultado.puedeGenerarInforme) {
+      alert("No se puede generar informe. Se requiere detección de neumonía con alta confianza.")
+      return
+    }
+
+    setIsGeneratingReport(true)
+
+    try {
+      // Simulate report generation time
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+
+      // Simulate report data
+      const reportData = {
+        case_id: `CASE_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        generated_by: "RADOX AI System",
+        full_report: `INFORME MÉDICO SIMULADO
+
+PACIENTE: ${patientId === "__new__" ? newPatientName : (patients.find(p => p.id === patientId)?.nombre || 'N/A')}
+FECHA DEL ESTUDIO: ${studyDate}
+DIAGNÓSTICO: ${analysisResult.resultado.diagnostico}
+CONFIANZA: ${(analysisResult.resultado.confianza * 100).toFixed(1)}%
+
+HALLAZGOS:
+- ${analysisResult.resultado.diagnostico === 'Neumonía' ? 'Se observan opacidades pulmonares sugestivas de neumonía' : 'No se observan hallazgos patológicos significativos'}
+- Campos pulmonares bien ventilados
+- Siluetas cardíacas normales
+
+IMPRESIÓN DIAGNÓSTICA:
+${analysisResult.resultado.diagnostico === 'Neumonía' ? 'Neumonía probable' : 'Radiografía de tórax normal'}
+
+RECOMENDACIONES:
+${analysisResult.resultado.diagnostico === 'Neumonía' ? 'Se recomienda evaluación clínica adicional y tratamiento antibiótico según protocolo' : 'No se requieren estudios adicionales'}`
+      }
+
+      console.log('Informe generado (simulado):', reportData)
+      
+      // Complete the upload process
+      const finalPatientId = patientId === "__new__" ? newPatientId : patientId;
+      onUploadComplete(finalPatientId)
+
+    } catch (error) {
+      console.error('Error generando informe:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
+      alert(`Error al generar informe: ${errorMessage}`)
+    } finally {
+      setIsGeneratingReport(false)
+    }
+  }
+
+  const startNewAnalysis = () => {
+    setSelectedFile(null)
+    setPreviewUrl("")
+    setAnalysisResult(null)
+    setIsAnalysisComplete(false)
+    setIsUploading(false)
+    setUploadProgress(0)
+    }
+
+  const completeWithoutReport = () => {
+    const finalPatientId = patientId === "__new__" ? newPatientId : patientId;
+    onUploadComplete(finalPatientId)
+  }
+
+  const getDiagnosisColor = (diagnosis: string) => {
+    if (diagnosis === 'Neumonía') return 'text-red-600'
+    if (diagnosis === 'Normal') return 'text-green-600'
+    return 'text-gray-600'
+  }
+
+  const getDiagnosisIcon = (diagnosis: string) => {
+    if (diagnosis === 'Neumonía') return <AlertTriangle className="h-6 w-6 text-red-600" />
+    if (diagnosis === 'Normal') return <CheckCircle className="h-6 w-6 text-green-600" />
+    return null
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -180,9 +328,9 @@ export default function UploadPage({ onUploadComplete }: UploadPageProps) {
                 className="mt-1 w-full border rounded p-2"
               >
                 <option value="">-- Select existing patient --</option>
-                {mockPatients.map(p => (
-                  <option key={p.patientId} value={p.patientId}>
-                    {p.patientId} - {p.name}
+                {patients.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.id} - {p.nombre}
                   </option>
                 ))}
                 <option value="__new__">Add new patient...</option>
@@ -206,7 +354,7 @@ export default function UploadPage({ onUploadComplete }: UploadPageProps) {
                 </>
               )}
               <p className="text-xs text-gray-500 mt-1">
-                Select an existing patient or add a new one
+                {loadingPatients ? "Loading patients..." : "Select an existing patient or add a new one"}
               </p>
             </div>
 
@@ -235,7 +383,7 @@ export default function UploadPage({ onUploadComplete }: UploadPageProps) {
 
             <Button
               onClick={handleUpload}
-              disabled={!selectedFile || !(patientId && (patientId !== "__new__" || (newPatientId && newPatientName))) || isUploading}
+              disabled={!selectedFile || !(patientId && (patientId !== "__new__" || (newPatientId && newPatientName))) || isUploading || isAnalysisComplete}
               className="w-full"
               size="lg"
             >
@@ -243,6 +391,11 @@ export default function UploadPage({ onUploadComplete }: UploadPageProps) {
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Processing...
+                </>
+              ) : isAnalysisComplete ? (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Analysis Complete
                 </>
               ) : (
                 <>
@@ -254,6 +407,144 @@ export default function UploadPage({ onUploadComplete }: UploadPageProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Analysis Results */}
+      {analysisResult && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileImage className="h-5 w-5" />
+              AI Analysis Results
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Diagnosis and Confidence */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  {getDiagnosisIcon(analysisResult.resultado.diagnostico)}
+                  <div>
+                    <h3 className="font-semibold">Diagnosis</h3>
+                    <p className={`text-lg font-bold ${getDiagnosisColor(analysisResult.resultado.diagnostico)}`}>
+                      {analysisResult.resultado.diagnostico}
+                    </p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold mb-2">Confidence</h3>
+                  <div className="flex items-center gap-2">
+                    <Progress value={analysisResult.resultado.confianza * 100} className="flex-1" />
+                    <span className="text-sm font-medium">
+                      {(analysisResult.resultado.confianza * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Details</h3>
+                  <div className="text-sm space-y-1">
+                    <p><span className="font-medium">Analysis Date:</span> {new Date(analysisResult.timestamp).toLocaleString()}</p>
+                    <p><span className="font-medium">Can Generate Report:</span> {analysisResult.resultado.puedeGenerarInforme ? 'Yes' : 'No'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Heatmap */}
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-2">CNN Heatmap</h3>
+                  {analysisResult.resultado.heatmap ? (
+                    <div className="bg-gray-100 rounded-lg p-2">
+                      <img
+                        src={analysisResult.resultado.heatmap}
+                        alt="CNN Heatmap"
+                        className="w-full h-48 object-contain rounded"
+                      />
+                      <p className="text-xs text-gray-600 mt-2 text-center">
+                        Areas highlighted by CNN model
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-100 rounded-lg p-4 text-center">
+                      <p className="text-gray-500">Heatmap not available</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-2">Actions</h3>
+                  {analysisResult.resultado.puedeGenerarInforme ? (
+                    <div className="space-y-3">
+                      <p className="text-sm text-gray-600">
+                        Pneumonia detected with high confidence. You can now generate a detailed medical report.
+                      </p>
+                      <Button
+                        onClick={generateReport}
+                        disabled={isGeneratingReport}
+                        className="w-full"
+                        size="lg"
+                      >
+                        {isGeneratingReport ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Generating Report...
+                          </>
+                        ) : (
+                          <>
+                            <FileImage className="mr-2 h-4 w-4" />
+                            Generate Report & Exit
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        onClick={completeWithoutReport}
+                        variant="outline"
+                        className="w-full"
+                        size="lg"
+                      >
+                        Exit Without Report
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-sm text-gray-600">
+                        {analysisResult.resultado.diagnostico === 'Normal' 
+                          ? 'No pneumonia detected. No medical report needed.'
+                          : 'Pneumonia detected but confidence is below threshold for report generation.'
+                        }
+                      </p>
+                      <Button
+                        onClick={completeWithoutReport}
+                        className="w-full"
+                        size="lg"
+                      >
+                        Complete Upload
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* New Analysis Button */}
+                <div className="pt-4 border-t">
+                  <Button
+                    onClick={startNewAnalysis}
+                    variant="outline"
+                    className="w-full"
+                    size="lg"
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    New Analysis
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

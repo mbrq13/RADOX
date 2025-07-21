@@ -14,7 +14,7 @@ import logging
 from loguru import logger
 
 from backend.config.settings import Settings
-from backend.api.routes import pneumonia, reports
+from backend.api.routes import pneumonia, reports, patients, studies
 from backend.models.cnn_model import CNNModel
 from backend.services.pneumonia_detection import PneumoniaDetectionService
 from backend.services.report_generation import ReportGenerationService
@@ -72,7 +72,10 @@ app = FastAPI(
 # Configurar CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080", "http://127.0.0.1:8080"],
+    allow_origins=[
+        "http://localhost:8080", "http://127.0.0.1:8080",
+        "http://localhost:3000", "http://127.0.0.1:3000"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -85,12 +88,19 @@ app.add_middleware(
 )
 
 # Montar archivos estáticos
-os.makedirs("data/uploads", exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="data/uploads"), name="uploads")
+PROJECT_ROOT = '/home/mbrq/Documents/RADOX'
+os.makedirs(os.path.join(PROJECT_ROOT, "data/uploads"), exist_ok=True)
+os.makedirs(os.path.join(PROJECT_ROOT, "data/uploads/images"), exist_ok=True)
+os.makedirs(os.path.join(PROJECT_ROOT, "data/uploads/reports"), exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=os.path.join(PROJECT_ROOT, "data/uploads")), name="uploads")
+app.mount("/uploads/images", StaticFiles(directory=os.path.join(PROJECT_ROOT, "data/uploads/images")), name="uploads-images")
+app.mount("/uploads/reports", StaticFiles(directory=os.path.join(PROJECT_ROOT, "data/uploads/reports")), name="uploads-reports")
 
 # Incluir rutas
 app.include_router(pneumonia.router, prefix="/api/v1", tags=["Pneumonia Detection"])
 app.include_router(reports.router, prefix="/api/v1", tags=["Medical Reports"])
+app.include_router(patients.router, prefix="/api/v1", tags=["Patients"])
+app.include_router(studies.router, prefix="/api/v1", tags=["Studies"])
 
 # Las dependencias están definidas en backend/dependencies.py
 

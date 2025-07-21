@@ -1,0 +1,38 @@
+[
+  {
+    "id": "b590b8f5-e462-4f40-8a00-02d185bab38b",
+    "patient_id": "P1234",
+    "fecha_estudio": "2025-07-21T16:38:14.379183",
+    "filename": "b590b8f5-e462-4f40-8a00-02d185bab38b_Neumo.jpeg",
+    "descripcion": "Estudio del 2025-07-21",
+    "diagnostico": "Neumonía",
+    "confianza": 0.8225386908691634
+  },
+  {
+    "id": "0a674a36-a8eb-4126-9922-c286924666e5",
+    "patient_id": "P1234",
+    "fecha_estudio": "2025-07-21T16:52:23.310709",
+    "filename": "0a674a36-a8eb-4126-9922-c286924666e5_Neumo.jpeg",
+    "descripcion": "Estudio del 2025-07-21",
+    "diagnostico": "Neumonía",
+    "confianza": 0.9671958655707502
+  },
+  {
+    "id": "fd6dbabf-5d9a-437a-98ac-a752c66fb756",
+    "patient_id": "P1234",
+    "fecha_estudio": "2025-07-21T16:55:18.905087",
+    "filename": "fd6dbabf-5d9a-437a-98ac-a752c66fb756_Screenshot from 2025-07-18 16-17-07.png",
+    "descripcion": "Estudio del 2025-07-21",
+    "diagnostico": "Normal",
+    "confianza": 0.10049844842137187
+  },
+  {
+    "id": "005a7f2c-2279-4548-95d9-d9f43051a2bb",
+    "patient_id": "P1234",
+    "fecha_estudio": "2025-07-21T16:57:43.806919",
+    "filename": "005a7f2c-2279-4548-95d9-d9f43051a2bb_Neumo.jpeg",
+    "descripcion": "Estudio del 2025-07-21",
+    "diagnostico": "Neumonía",
+    "confianza": 0.908279326067084
+  }
+]

@@ -39,7 +39,7 @@ class CNNModel:
 
         self.model: torch.nn.Module = None
         self.is_loaded = False
-
+        
     async def load_model(self) -> bool:
         """Carga el DenseNet121 preentrenado de TorchXRayVision."""
         try:
@@ -51,11 +51,11 @@ class CNNModel:
                 ).to(self.device).eval()
             self.is_loaded = True
             return True
-
+            
         except Exception as e:
             print(f"❌ Error cargando TorchXRayVision model: {e}")
             return False
-
+    
     def _preprocess(self, img: np.ndarray) -> torch.Tensor:
         """
         Convierte H×W×C numpy array a 1×1×224×224 tensor normalizado.
@@ -100,7 +100,7 @@ class CNNModel:
             },
             "raw_predictions": logits.cpu().numpy().tolist()
         }
-
+    
     def get_model_info(self) -> Dict[str, Any]:
         return {
             "status":       "loaded" if self.is_loaded else "not_loaded",

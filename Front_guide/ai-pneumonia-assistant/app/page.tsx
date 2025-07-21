@@ -20,6 +20,7 @@ export default function PneumoniaAssistant() {
   const [activeTab, setActiveTab] = useState<TabType>("patients")
   const [currentView, setCurrentView] = useState<ViewType>("main")
   const [selectedStudy, setSelectedStudy] = useState<any>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   // Redirect to patients tab after login
   useEffect(() => {
@@ -43,6 +44,7 @@ export default function PneumoniaAssistant() {
   const handleUploadComplete = (patientId: string) => {
     setActiveTab("patients")
     setCurrentView("main")
+    setRefreshKey(k => k + 1) // Forzar refresco
   }
 
   // Show login page if not authenticated
@@ -57,7 +59,7 @@ export default function PneumoniaAssistant() {
 
     switch (activeTab) {
       case "patients":
-        return <PatientsPage onViewStudyDetails={handleViewStudyDetails} />
+        return <PatientsPage onViewStudyDetails={handleViewStudyDetails} refreshKey={refreshKey} />
       case "upload":
         return user?.role === "viewer" ? (
           <div className="text-center py-12">
@@ -77,7 +79,7 @@ export default function PneumoniaAssistant() {
       case "settings":
         return <SettingsPage />
       default:
-        return <PatientsPage onViewStudyDetails={handleViewStudyDetails} />
+        return <PatientsPage onViewStudyDetails={handleViewStudyDetails} refreshKey={refreshKey} />
     }
   }
 
