@@ -48,7 +48,7 @@ class ReportGenerator {
             this.isInitialized = false;
         }
     }
-
+    
     async testConnection() {
         try {
             const response = await axios.post(

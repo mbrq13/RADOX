@@ -1,102 +1,63 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+# Archivos grandes y ejecutables
+*.tar.gz
+*.exe
+*.h5
+*.pth
+*.pkl
+*.zip
+*.rar
 
-# Virtual Environment
+# Directorios de build
+build/
+dist/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Archivos temporales
+*.tmp
+*.temp
+*.log
+*.out
+
+# Entornos virtuales
 venv/
 env/
-ENV/
-env.bak/
-venv.bak/
-
-# Environment Variables
+.venv/
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
 
-# IDEs
+# Archivos de configuración local
+.env.local
+.env.production
+
+# Archivos de IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
 
-# Jupyter Notebook
-.ipynb_checkpoints
+# Archivos del sistema
+.DS_Store
+Thumbs.db
 
-# Data and Models
-data/models/*.h5
-data/models/*.pkl
-data/models/*.joblib
-data/uploads/*
-!data/uploads/.gitkeep
-data/vector_db/*
-!data/vector_db/.gitkeep
+# Archivos de datos grandes
+data/uploads/
+data/vector_db/
+models/*.h5
+models/*.pth
+models/*.pkl
 
 # Logs
 logs/
 *.log
 
-# Docker
-.dockerignore
-
-# System Files
-.DS_Store
-Thumbs.db
-
-# Temporary Files
-*.tmp
-*.temp
+# Archivos de cache
 .cache/
-
-# Tests
 .pytest_cache/
 .coverage
 htmlcov/
 
-# Documentation
-docs/_build/
-
-# ChromaDB
-chroma.log
-
-# Hugging Face Cache
-.cache/huggingface/
-
-# Medical Images (for privacy)
-*.dcm
-*.dicom
-*.jpg
-*.jpeg
-*.png
-!frontend/static/images/*.png
-!frontend/static/images/*.jpg
-
-# Backup Files
-*.bak
-*.backup
-
-# Local Development
-local_config.py
-development.env 
+# Archivos de distribución
+RADOX_Backend_*.tar.gz
+RADOX_*.tar.gz 

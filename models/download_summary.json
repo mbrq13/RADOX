@@ -1,0 +1,26 @@
+{
+  "download_date": "/home/mbrq/Documents/RADOX",
+  "results": {
+    "chexnet": {
+      "status": "download_failed",
+      "filepath": "/home/mbrq/Documents/RADOX/models/chexnet_official_weights.h5"
+    },
+    "covid_net": {
+      "status": "download_failed",
+      "filepath": "/home/mbrq/Documents/RADOX/models/covid_net_resnet50.pth"
+    },
+    "torchxrayvision": {
+      "status": "download_failed",
+      "filepath": "/home/mbrq/Documents/RADOX/models/torchxrayvision_densenet121.pt"
+    },
+    "pneumonia_detection": {
+      "status": "download_failed",
+      "filepath": "/home/mbrq/Documents/RADOX/models/pneumonia_efficientnet.h5"
+    }
+  },
+  "statistics": {
+    "successful": 0,
+    "already_existing": 0,
+    "failed": 4
+  }
+}

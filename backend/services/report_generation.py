@@ -24,7 +24,8 @@ class ReportGenerationService:
         """
         self.hf_token = huggingface_token
         self.model_name = model_name
-        self.api_url = f"https://api-inference.huggingface.co/models/{model_name}"
+        # Usar el endpoint específico de MedGemma
+        self.api_url = "https://t911ok4t5x994zcu.us-east-1.aws.endpoints.huggingface.cloud"
         self.headers = {
             "Authorization": f"Bearer {huggingface_token}",
             "Content-Type": "application/json"

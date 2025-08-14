@@ -62,6 +62,10 @@ class PneumoniaDetectionService:
             
             # Realizar predicción con el modelo CNN
             prediction_result = await self.cnn_model.predict(image_array)
+
+            # Generar heatmap Grad-CAM
+            heatmap_base64 = self.cnn_model.get_gradcam_heatmap(image_array)
+            prediction_result["heatmap"] = heatmap_base64
             
             # Extraer información médica de la imagen si es DICOM
             dicom_metadata = None

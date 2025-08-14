@@ -88,20 +88,6 @@ export default function PneumoniaAssistant() {
       <Header activeTab={activeTab} onTabChange={setActiveTab} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Demo Notice */}
-        <Card className="mb-6 border-amber-200 bg-amber-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-amber-800">
-              <Activity className="h-4 w-4" />
-              <span className="text-sm font-medium">Modo Demo Activo</span>
-            </div>
-            <p className="text-xs text-amber-700 mt-1">
-              Sesión iniciada como: <strong>{user?.name}</strong> ({user?.role}) - Sistema de demostración con datos
-              simulados.
-            </p>
-          </CardContent>
-        </Card>
-
         {/* Main Content */}
         {renderMainContent()}
 
